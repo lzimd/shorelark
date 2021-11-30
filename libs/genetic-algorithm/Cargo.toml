@@ -1,0 +1,12 @@
+[package]
+name = "genetic_algorithm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rand = "0.8"
+
+[dev-dependencies]
+rand_chacha = "0.3"
+maplit = "1.0"
+approx = "0.4"

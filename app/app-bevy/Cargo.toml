@@ -1,0 +1,10 @@
+[package]
+name = "app-bevy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = { version = "0.5.0", features = ["dynamic", "trace"] }
+simulation = { path = "../../libs/simulation" }
+rand = "0.8"
+glam = "0.13.0"

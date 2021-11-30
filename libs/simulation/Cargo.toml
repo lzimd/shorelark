@@ -1,0 +1,13 @@
+[package]
+name = "simulation"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+neural_network = { path = "../neural-network" }
+genetic_algorithm = { path = "../genetic-algorithm" }
+rand = "0.8"
+glam = "0.13.0"
+
+[dev-dependencies]
+test-case = "1.1"
