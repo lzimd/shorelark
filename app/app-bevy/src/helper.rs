@@ -1,4 +1,5 @@
 use glam::{quat, Mat4, Vec2, Vec3};
+pub use simulation::helper::wrap;
 
 pub struct Bounds {
     width: f32,
@@ -21,24 +22,4 @@ pub fn transform_viewport_from_postion(bounds: Vec2, position: Vec3) -> Mat4 {
         quat(0., 0., 0., 0.),
         position * bounds.extend(1.0),
     )
-}
-
-pub fn wrap(mut item: f32, min_val: f32, max_val: f32) -> f32 {
-    let width = max_val - min_val;
-
-    if item < min_val {
-        item += width;
-
-        while item < min_val {
-            item += width
-        }
-    } else if item > max_val {
-        item -= width;
-
-        while item > max_val {
-            item -= width
-        }
-    }
-
-    item
 }

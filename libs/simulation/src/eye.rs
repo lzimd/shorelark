@@ -25,8 +25,9 @@ impl Eye {
         self.cells
     }
 
-    pub fn process_vision(&self, position: Vec3, velocity: Vec3, foods: &[Food]) -> Vec<f32> {
+    pub fn process_vision(&self, position: Vec3, rotation: Quat, foods: &[Food]) -> Vec<f32> {
         let mut cells = vec![0.0; self.cells];
+        let x_axis = vec3(1.0, 0., 0.);
 
         for food in foods {
             let vec = food.position - position;
@@ -35,8 +36,8 @@ impl Eye {
                 continue;
             }
 
-            let angle = velocity.truncate().angle_between(vec.truncate());
-            let angle = wrap(angle, -PI, PI);
+            let angle = rotation.mul_vec3(x_axis).truncate().angle_between(vec.truncate());
+            let angle = helper::wrap(angle, -PI, PI);
             if angle < -self.fov_angle / 2.0 || angle > self.fov_angle / 2.0 {
                 continue;
             }
@@ -57,26 +58,6 @@ impl Default for Eye {
     fn default() -> Self {
         Self::new(0.5, PI, 9)
     }
-}
-
-fn wrap(mut item: f32, min_val: f32, max_val: f32) -> f32 {
-    let width = max_val - min_val;
-
-    if item < min_val {
-        item += width;
-
-        while item < min_val {
-            item += width
-        }
-    } else if item > max_val {
-        item -= width;
-
-        while item > max_val {
-            item -= width
-        }
-    }
-
-    item
 }
 
 #[cfg(test)]
@@ -108,7 +89,7 @@ mod tests {
 
             let actual_vision = eye.process_vision(
                 Vec3::new(self.x, self.y, 1.0),
-                Vec3::new(self.rot.cos(), self.rot.sin(), 0.0),
+                Quat::from_rotation_z(self.rot),
                 &self.foods,
             );
             let actual_vision: Vec<_> = actual_vision

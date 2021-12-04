@@ -4,13 +4,14 @@ mod brain;
 mod eye;
 mod food;
 mod world;
+pub mod helper;
 
 pub use self::{animal::*, food::*, world::*};
 use self::{animal_individual::*, brain::*, eye::*};
 use genetic_algorithm as ga;
 use neural_network as nn;
 
-use glam::Vec3;
+use glam::{Quat, Vec3, vec3};
 use rand::{Rng, RngCore};
 
 /// How much `.step()`-s have to occur before we push data into the
@@ -22,7 +23,7 @@ use rand::{Rng, RngCore};
 ///
 /// You can treat this number as "for how many steps each bird gets
 /// to live"; 2500 was chosen with a fair dice roll.
-const GENERATION_LENGTH: usize = 1000;
+const GENERATION_LENGTH: usize = 2500;
 
 pub struct Simulation {
     world: World,
@@ -66,13 +67,6 @@ impl Simulation {
 
     pub fn preprocess_generation(&mut self) -> bool {
         self.age += 1;
-
-        if self.age % 100 == 0 {
-            println!("+ {}", self.age);
-        } else {
-            print!(".");
-        }
-
         self.age > GENERATION_LENGTH
     }
 
@@ -87,8 +81,9 @@ impl Simulation {
 
         // Step 2: Evolve birdies
         // Evolves this `Vec<AnimalIndividual>`
-        let evolved_population = self.ga.evolve(&mut rng, &current_population);
-
+        let (evolved_population, stats) = self.ga.evolve(&mut rng, &current_population);
+        println!("statistics:{:?}", stats);
+        
         // Step 3: Bring birdies back from the genetic algorithm
         // Transforms `Vec<AnimalIndividual>` back into `Vec<Animal>`
         self.world.animals = evolved_population

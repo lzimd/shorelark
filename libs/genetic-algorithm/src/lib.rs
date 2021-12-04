@@ -3,10 +3,12 @@
 mod crossover;
 mod mutation;
 mod select;
+mod statistics;
 
 pub use crossover::{CrossoverMethod, UniformCrossover};
 pub use mutation::{GaussianMutation, MutationMethod};
 pub use select::{RouletteWheelSelection, SelectionMethod};
+pub use statistics::Statistics;
 
 use rand::RngCore;
 use std::ops::Index;
@@ -19,9 +21,9 @@ pub struct GeneticAlgorithm<S, C, M> {
 
 impl<S, C, M> GeneticAlgorithm<S, C, M>
 where
-    S: select::SelectionMethod,
-    C: crossover::CrossoverMethod,
-    M: mutation::MutationMethod,
+    S: SelectionMethod,
+    C: CrossoverMethod,
+    M: MutationMethod,
 {
     pub fn new(selection_method: S, crossover_method: C, mutation_method: M) -> Self {
         Self {
@@ -31,13 +33,13 @@ where
         }
     }
 
-    pub fn evolve<I>(&self, rng: &mut dyn RngCore, population: &[I]) -> Vec<I>
+    pub fn evolve<I>(&self, rng: &mut dyn RngCore, population: &[I]) -> (Vec<I>, Statistics)
     where
         I: Individual,
     {
         assert!(!population.is_empty());
 
-        (0..population.len())
+        let new_population  = (0..population.len())
             .map(|_| {
                 // selection
                 let parent_a = self.selection_method.select(rng, population).chromosome();
@@ -52,7 +54,11 @@ where
                 // convert `Chromosome` back into `Individual`
                 I::create(child)
             })
-            .collect()
+            .collect();
+
+            let stats = Statistics::new(population);
+            
+            (new_population, stats)
     }
 }
 
@@ -196,7 +202,9 @@ mod test {
         ];
 
         for _ in 1..20 {
-            population = ga.evolve(&mut rng, &population);
+            let ret = ga.evolve(&mut rng, &population);
+            population = ret.0;
+            println!("{:?}", ret.1)
         }
 
         let expected_population = vec![
@@ -227,7 +235,9 @@ mod test {
         ];
 
         for _ in 1..7 {
-            population = ga.evolve(&mut rng, &population);
+            let ret = ga.evolve(&mut rng, &population);
+            population = ret.0;
+            println!("{:?}", ret.1)
         }
 
         let expected_population = vec![

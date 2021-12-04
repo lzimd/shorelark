@@ -70,12 +70,17 @@ fn process_movements_system(
     mut animal_query: Query<(&mut Animal, &mut Transform)>,
 ) {
     for (mut animal, mut transform) in animal_query.iter_mut() {
-        let mut position = animal.position() + animal.velocity() * time.delta_seconds();
+        let vel = animal
+            .rotation()
+            .mul_vec3(Vec3::new(animal.speed(), 0., 0.));
+
+        let mut position = animal.position() + vel * time.delta_seconds();
         position.x = helper::wrap(position.x, -0.5, 0.5);
         position.y = helper::wrap(position.y, -0.5, 0.5);
         animal.set_position(position);
 
-        transform.translation = animal.position() * bounds.to_vec2().extend(0.0);
+        transform.translation = animal.position() * bounds.to_vec2().extend(1.0);
+        transform.rotation = animal.rotation();
     }
 }
 
@@ -118,16 +123,8 @@ fn process_brains_system(
     food_query: Query<(&Food, &Sprite)>,
 ) {
     let foods: Vec<Food> = food_query.iter().map(|(food, _)| food.clone()).collect();
-    const SPEED_ACCEL: f32 = 0.2;
-    const ROTATION_ACCEL: f32 = 3.14;
-
     for (mut animal, _, _) in animal_query.iter_mut() {
-        let vision = animal.process_vision(&foods);
-        let response = animal.brain_propagate(vision);
-        let speed = response[0].clamp(-SPEED_ACCEL, SPEED_ACCEL);
-        let rotation = response[1].clamp(-ROTATION_ACCEL, ROTATION_ACCEL);
-        let velocity = Vec3::new(speed * rotation.cos(), speed * rotation.sin(), 0.0);
-        animal.set_velocity(velocity);
+        animal.process_brains(&foods);
     }
 }
 

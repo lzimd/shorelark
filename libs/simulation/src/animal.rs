@@ -7,7 +7,8 @@ const ANIMAL_SPEED: f32 = 0.1;
 #[derive(Clone, Debug)]
 pub struct Animal {
     position: Vec3,
-    velocity: Vec3,
+    rotation: Quat,
+    speed: f32,
     eye: Eye,
     brain: Brain,
     /// Number of foods eaten by this animal
@@ -18,14 +19,8 @@ impl Animal {
     fn new(rng: &mut dyn RngCore, eye: Eye, brain: Brain) -> Self {
         Self {
             position: Vec3::new(rng.gen::<f32>() - 0.5, rng.gen::<f32>() - 0.5, 1.0),
-            velocity: {
-                let rotation: f32 = 2. * PI * rng.gen::<f32>();
-                Vec3::new(
-                    ANIMAL_SPEED * rotation.cos(),
-                    ANIMAL_SPEED * rotation.sin(),
-                    0.0,
-                )
-            },
+            rotation: Quat::from_rotation_z(2. * PI * rng.gen::<f32>()),
+            speed: ANIMAL_SPEED,
             eye,
             brain,
             satiation: 0,
@@ -47,24 +42,23 @@ impl Animal {
         self.position = position;
     }
 
-    pub fn velocity(&self) -> Vec3 {
-        self.velocity
+    pub fn rotation(&self) -> Quat {
+        self.rotation
     }
 
-    pub fn set_velocity(&mut self, velocity: Vec3) {
-        self.velocity = velocity;
+    pub fn speed(&self) -> f32 {
+        self.speed
     }
 
     pub fn eat_food(&mut self) {
         self.satiation += 1;
     }
 
-    pub fn process_vision(&self, foods: &[Food]) -> Vec<f32> {
-        self.eye.process_vision(self.position, self.velocity, foods)
-    }
-
-    pub fn brain_propagate(&self, inputs: Vec<f32>) -> Vec<f32> {
-        self.brain.propagate(inputs)
+    pub fn process_brains(&mut self, foods: &[Food]) {
+        let vision = self.eye.process_vision(self.position, self.rotation, foods);
+        let (speed, rotation) = self.brain.propagate(vision);
+        self.speed = helper::wrap(self.speed + speed, 0.001, 0.2);
+        self.rotation = Quat::from_rotation_z(rotation) * self.rotation;
     }
 
     pub(crate) fn as_chromosome(&self) -> ga::Chromosome {
